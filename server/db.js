@@ -8,14 +8,25 @@ const connectDB = async () => {
       : 'undefined';
     console.log('Attempting to connect to MongoDB with URI:', maskedUri);
 
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    // Parse the MongoDB URI to get the host
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+
+    // Add retryWrites and w=majority options to the connection string if not present
+    const uriWithOptions = uri.includes('?') 
+      ? `${uri}&retryWrites=true&w=majority` 
+      : `${uri}?retryWrites=true&w=majority`;
+
+    const conn = await mongoose.connect(uriWithOptions, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000, // Timeout after 30 seconds
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      connectTimeoutMS: 30000, // Give up initial connection after 30 seconds
-      keepAlive: true,
-      keepAliveInitialDelay: 300000 // Send keepAlive signal every 5 minutes
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      // Remove deprecated options
+      family: 4 // Force IPv4
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
@@ -33,9 +44,10 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    console.error(`Error connecting to MongoDB:`, error);
+    // Don't exit the process, let it retry
+    throw error;
   }
 };
 
-module.exports = connectDB; 
+module.exports = connectDB;

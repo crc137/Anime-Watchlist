@@ -10,8 +10,28 @@ const User = require('./models/User');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB with retries
+const initializeMongoDB = async () => {
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      await connectDB();
+      console.log('MongoDB connection successful');
+      break;
+    } catch (error) {
+      console.error(`Failed to connect to MongoDB. Retries left: ${retries - 1}`);
+      retries -= 1;
+      if (retries === 0) {
+        console.error('Could not connect to MongoDB after multiple retries');
+        process.exit(1);
+      }
+      // Wait for 5 seconds before retrying
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+initializeMongoDB();
 
 // Middleware
 app.use(cors());
