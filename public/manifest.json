@@ -1,0 +1,8 @@
+{
+  "short_name": "Anime Watchlist",
+  "name": "Anime Watchlist Telegram Mini App",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+} 
