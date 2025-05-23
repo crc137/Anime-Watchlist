@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { WebApp } from '@vkruglikov/react-telegram-web-app';
+import { WebAppProvider, useWebApp } from '@vkruglikov/react-telegram-web-app';
 import { createUser, updateAnimeList } from './utils/api';
 import Profile from './components/Profile';
 import debounce from 'lodash/debounce';
@@ -139,13 +139,13 @@ const SuggestionItem = styled.div`
   }
 `;
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState('main');
   const [animeTitle, setAnimeTitle] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [animeList, setAnimeList] = useState([]);
   const [user, setUser] = useState(null);
-  const webApp = WebApp();
+  const webApp = useWebApp();
 
   const getFilteredSuggestions = useCallback((searchTerm) => {
     if (searchTerm.length >= 2) {
@@ -312,6 +312,14 @@ function App() {
         </NavButton>
       </BottomNavigation>
     </Container>
+  );
+}
+
+function App() {
+  return (
+    <WebAppProvider>
+      <AppContent />
+    </WebAppProvider>
   );
 }
 
