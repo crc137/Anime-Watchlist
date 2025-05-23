@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { MainButton } from '@vkruglikov/react-telegram-web-app';
 import { createUser, updateAnimeList } from './utils/api';
 import Profile from './components/Profile';
 import debounce from 'lodash/debounce';
@@ -175,34 +176,35 @@ function AppContent() {
   };
 
   useEffect(() => {
-    const initUser = async () => {
-      console.log('WebApp init data:', webApp?.initDataUnsafe);
-      if (webApp?.initDataUnsafe?.user) {
-        try {
-          console.log('Initializing user with data:', webApp.initDataUnsafe.user);
-          const userData = await createUser(
-            webApp.initDataUnsafe.user.id.toString(),
-            webApp.initDataUnsafe.user.username || 'Anonymous'
-          );
-          console.log('User data received:', userData);
-          setUser(userData);
-          setAnimeList(userData.animeList || []);
-        } catch (error) {
-          console.error('Error initializing user:', error);
-        }
-      } else {
-        console.warn('No user data in WebApp init data');
-      }
-    };
-
     if (webApp) {
       console.log('WebApp is available, calling ready()');
       webApp.ready();
+      
+      const initUser = async () => {
+        console.log('WebApp init data:', webApp.initDataUnsafe);
+        if (webApp.initDataUnsafe?.user) {
+          try {
+            console.log('Initializing user with data:', webApp.initDataUnsafe.user);
+            const userData = await createUser(
+              webApp.initDataUnsafe.user.id.toString(),
+              webApp.initDataUnsafe.user.username || 'Anonymous'
+            );
+            console.log('User data received:', userData);
+            setUser(userData);
+            setAnimeList(userData.animeList || []);
+          } catch (error) {
+            console.error('Error initializing user:', error);
+          }
+        } else {
+          console.warn('No user data in WebApp init data');
+        }
+      };
+
       initUser();
     } else {
       console.warn('WebApp is not available');
     }
-  }, [webApp]);
+  }, []);
 
   const handleAddAnime = async () => {
     if (!animeTitle.trim() || !user) return;
