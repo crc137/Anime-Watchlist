@@ -132,25 +132,41 @@ const AnimeSearch = ({ onAddToList }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [friendId, setFriendId] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const debouncedSearch = useCallback(
     debounce(async (term) => {
       if (term.length >= 2) {
-        const results = await searchAnime(term);
-        setSuggestions(results);
-        setShowSuggestions(true);
+        setIsLoading(true);
+        setError(null);
+        try {
+          console.log('Searching for:', term);
+          const results = await searchAnime(term);
+          console.log('Search results:', results);
+          setSuggestions(results);
+          setShowSuggestions(true);
+        } catch (err) {
+          console.error('Search error:', err);
+          setError('Failed to search anime');
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    }, 300),
+    }, 500),
     []
   );
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    debouncedSearch(value);
+    if (value.length >= 2) {
+      console.log('Triggering search for:', value);
+      debouncedSearch(value);
+    }
   };
 
   const handleSelectAnime = async (animeId) => {
@@ -188,6 +204,8 @@ const AnimeSearch = ({ onAddToList }) => {
           onChange={handleInputChange}
           showSuggestions={showSuggestions && suggestions.length > 0}
         />
+        {isLoading && <div>Loading...</div>}
+        {error && <div style={{ color: 'red' }}>{error}</div>}
         {showSuggestions && suggestions.length > 0 && (
           <SuggestionsList>
             {suggestions.map((anime) => (
