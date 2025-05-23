@@ -10,6 +10,9 @@ const User = require('./models/User');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Track MongoDB connection state
+let isMongoConnected = false;
+
 // Connect to MongoDB with retries
 const initializeMongoDB = async () => {
   let retries = 5;
@@ -17,13 +20,15 @@ const initializeMongoDB = async () => {
     try {
       await connectDB();
       console.log('MongoDB connection successful');
+      isMongoConnected = true;
       break;
     } catch (error) {
       console.error(`Failed to connect to MongoDB. Retries left: ${retries - 1}`);
       retries -= 1;
       if (retries === 0) {
         console.error('Could not connect to MongoDB after multiple retries');
-        process.exit(1);
+        // Don't exit, continue running the server
+        break;
       }
       // Wait for 5 seconds before retrying
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -31,7 +36,19 @@ const initializeMongoDB = async () => {
   }
 };
 
-initializeMongoDB();
+// Middleware to check MongoDB connection
+const checkMongoConnection = (req, res, next) => {
+  if (!isMongoConnected) {
+    return res.status(503).json({
+      message: 'Database connection is not available. Please try again later.',
+      error: 'DB_CONNECTION_ERROR'
+    });
+  }
+  next();
+};
+
+// Initialize MongoDB
+initializeMongoDB().catch(console.error);
 
 // Middleware
 app.use(cors());
@@ -192,6 +209,9 @@ app.post('/api/recommendations/:telegramId', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// Apply MongoDB connection check to API routes
+app.use('/api', checkMongoConnection);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
