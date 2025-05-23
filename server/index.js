@@ -8,7 +8,7 @@ const connectDB = require('./db');
 const User = require('./models/User');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectDB();
@@ -18,8 +18,14 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Serve static files from React build
-app.use(express.static(path.join(__dirname, '../src/build')));
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../build')));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -34,13 +40,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Create uploads directory if it doesn't exist
-const fs = require('fs');
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-}
-
-// API Routes
+// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API is working!' });
 });
@@ -117,13 +117,17 @@ app.post('/api/user/anime/:telegramId', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    // Check if anime already exists
     const existingAnimeIndex = user.animeList.findIndex(a => a.title === title);
     if (existingAnimeIndex !== -1) {
+      // Update existing anime
       user.animeList[existingAnimeIndex].status = status;
     } else {
+      // Add new anime
       user.animeList.push({ title, status });
     }
 
+    // Update counts
     user.watchedCount = user.animeList.filter(a => a.status === 'completed').length;
     user.plannedCount = user.animeList.filter(a => a.status === 'planned').length;
     
@@ -169,10 +173,17 @@ app.post('/api/recommendations/:telegramId', async (req, res) => {
   }
 });
 
-// Serve React app for all other routes
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../src/build/index.html'));
+  res.sendFile(path.join(__dirname, '../build/index.html'));
 });
+
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
