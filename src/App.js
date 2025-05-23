@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { useWebApp } from '@vkruglikov/react-telegram-web-app';
+import { useWebApp } from '@vkruglikov/react-telegram-web-app/hook';
 import { createUser, updateAnimeList } from './utils/api';
 import Profile from './components/Profile';
 import debounce from 'lodash/debounce';
