@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { useWebApp } from '@vkruglikov/react-telegram-web-app/hook';
+import { WebApp } from '@vkruglikov/react-telegram-web-app';
 import { createUser, updateAnimeList } from './utils/api';
 import Profile from './components/Profile';
 import debounce from 'lodash/debounce';
@@ -145,7 +145,7 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [animeList, setAnimeList] = useState([]);
   const [user, setUser] = useState(null);
-  const webApp = useWebApp();
+  const webApp = WebApp();
 
   const getFilteredSuggestions = useCallback((searchTerm) => {
     if (searchTerm.length >= 2) {
