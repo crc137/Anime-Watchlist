@@ -175,36 +175,35 @@ function AppContent() {
     setSuggestions([]);
   };
 
+  const initUser = useCallback(async () => {
+    if (!webApp?.initDataUnsafe?.user) {
+      console.warn('No user data in WebApp init data');
+      return;
+    }
+
+    try {
+      console.log('Initializing user with data:', webApp.initDataUnsafe.user);
+      const userData = await createUser(
+        webApp.initDataUnsafe.user.id.toString(),
+        webApp.initDataUnsafe.user.username || 'Anonymous'
+      );
+      console.log('User data received:', userData);
+      setUser(userData);
+      setAnimeList(userData.animeList || []);
+    } catch (error) {
+      console.error('Error initializing user:', error);
+    }
+  }, [webApp]);
+
   useEffect(() => {
     if (webApp) {
       console.log('WebApp is available, calling ready()');
       webApp.ready();
-      
-      const initUser = async () => {
-        console.log('WebApp init data:', webApp.initDataUnsafe);
-        if (webApp.initDataUnsafe?.user) {
-          try {
-            console.log('Initializing user with data:', webApp.initDataUnsafe.user);
-            const userData = await createUser(
-              webApp.initDataUnsafe.user.id.toString(),
-              webApp.initDataUnsafe.user.username || 'Anonymous'
-            );
-            console.log('User data received:', userData);
-            setUser(userData);
-            setAnimeList(userData.animeList || []);
-          } catch (error) {
-            console.error('Error initializing user:', error);
-          }
-        } else {
-          console.warn('No user data in WebApp init data');
-        }
-      };
-
       initUser();
     } else {
       console.warn('WebApp is not available');
     }
-  }, []);
+  }, [webApp, initUser]);
 
   const handleAddAnime = async () => {
     if (!animeTitle.trim() || !user) return;
