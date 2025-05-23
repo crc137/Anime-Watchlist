@@ -180,18 +180,18 @@ function AppContent() {
       return;
     }
 
-    try {
-      console.log('Initializing user with data:', webApp.initDataUnsafe.user);
-      const userData = await createUser(
-        webApp.initDataUnsafe.user.id.toString(),
-        webApp.initDataUnsafe.user.username || 'Anonymous'
-      );
-      console.log('User data received:', userData);
-      setUser(userData);
-      setAnimeList(userData.animeList || []);
-    } catch (error) {
-      console.error('Error initializing user:', error);
-    }
+        try {
+          console.log('Initializing user with data:', webApp.initDataUnsafe.user);
+          const userData = await createUser(
+            webApp.initDataUnsafe.user.id.toString(),
+            webApp.initDataUnsafe.user.username || 'Anonymous'
+          );
+          console.log('User data received:', userData);
+          setUser(userData);
+          setAnimeList(userData.animeList || []);
+        } catch (error) {
+          console.error('Error initializing user:', error);
+        }
   }, [webApp]);
 
   useEffect(() => {

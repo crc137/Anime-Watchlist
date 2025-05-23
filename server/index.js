@@ -6,7 +6,6 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const connectDB = require('./db');
 const User = require('./models/User');
-const recommendationsRouter = require('./routes/recommendations');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -59,17 +58,10 @@ app.use('/uploads', express.static('uploads'));
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 
-// Routes
-app.use('/api/recommendations', recommendationsRouter);
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+  res.status(500).json({ message: 'Something went wrong!' });
 });
 
 // Configure multer for file uploads

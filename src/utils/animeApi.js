@@ -12,8 +12,7 @@ export const searchAnime = async (query) => {
       synopsis: anime.synopsis,
       score: anime.score,
       episodes: anime.episodes,
-      status: anime.status,
-      type: anime.type
+      status: anime.status
     }));
   } catch (error) {
     console.error('Error searching anime:', error);
@@ -33,10 +32,9 @@ export const getAnimeDetails = async (animeId) => {
       score: data.data.score,
       episodes: data.data.episodes,
       status: data.data.status,
-      type: data.data.type,
       genres: data.data.genres.map(g => g.name),
-      studios: data.data.studios.map(s => s.name),
-      aired: data.data.aired.string
+      rating: data.data.rating,
+      duration: data.data.duration
     };
   } catch (error) {
     console.error('Error getting anime details:', error);
