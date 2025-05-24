@@ -37,11 +37,19 @@ const userSchema = new mongoose.Schema({
     addedAt: {
       type: Date,
       default: Date.now
-    }
+    },
+    image: String,
+    episodes: String,
+    score: String,
+    synopsis: String
   }],
   recommendations: [{
     animeTitle: String,
-    comment: String
+    comment: String,
+    sharedAt: {
+      type: Date,
+      default: Date.now
+    }
   }]
 });
 

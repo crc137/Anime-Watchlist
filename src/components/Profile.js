@@ -16,10 +16,14 @@ const ProfileHeader = styled.div`
 
 const AvatarContainer = styled.div`
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   margin-right: 20px;
   cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--tg-theme-secondary-bg-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
   &:hover .avatar-overlay {
     opacity: 1;
@@ -29,10 +33,18 @@ const AvatarContainer = styled.div`
 const AvatarImage = styled.div`
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   background: ${props => props.src ? `url(${props.src})` : 'var(--tg-theme-secondary-bg-color)'};
   background-size: cover;
   background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tg-theme-hint-color);
+  font-size: 40px;
+
+  &::after {
+    content: '${props => !props.src ? "+" : ""}';
+  }
 `;
 
 const AvatarOverlay = styled.div`
@@ -41,16 +53,14 @@ const AvatarOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 50%;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   opacity: 0;
   transition: opacity 0.2s;
-  pointer-events: none;
 `;
 
 const UserInfo = styled.div`
@@ -61,68 +71,106 @@ const Username = styled.h2`
   margin: 0;
   color: var(--tg-theme-text-color);
   font-size: 24px;
+  margin-bottom: 5px;
 `;
 
-const Stats = styled.div`
+const UserStats = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
   margin-top: 20px;
+  margin-bottom: 30px;
 `;
 
 const StatCard = styled.div`
   background: var(--tg-theme-secondary-bg-color);
   padding: 15px;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const StatNumber = styled.div`
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   color: var(--tg-theme-text-color);
+  margin-bottom: 5px;
 `;
 
 const StatLabel = styled.div`
   font-size: 14px;
   color: var(--tg-theme-hint-color);
-  margin-top: 5px;
 `;
 
-const ProfileId = styled.div`
-  text-align: center;
-  padding: 10px;
-  background: var(--tg-theme-secondary-bg-color);
-  border-radius: 8px;
-  margin: 10px 0;
-  font-family: monospace;
-  cursor: pointer;
-`;
-
-const Section = styled.div`
+const AnimeListSection = styled.div`
   margin: 20px 0;
-  
-  h3 {
-    color: var(--tg-theme-button-color);
-    margin-bottom: 10px;
-  }
 `;
 
-const AnimeItem = styled.div`
+const SectionTitle = styled.h3`
+  color: var(--tg-theme-text-color);
+  margin-bottom: 15px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const AnimeCard = styled.div`
   background: var(--tg-theme-secondary-bg-color);
+  border-radius: 12px;
+  margin-bottom: 15px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+`;
+
+const AnimeImage = styled.img`
+  width: 100px;
+  height: 140px;
+  object-fit: cover;
+`;
+
+const AnimeInfo = styled.div`
   padding: 15px;
-  border-radius: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const AnimeTitle = styled.div`
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 8px;
+`;
+
+const AnimeDetails = styled.div`
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
   margin-bottom: 10px;
-  
-  .title {
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-  
-  .date {
-    font-size: 12px;
-    color: var(--tg-theme-hint-color);
-  }
+`;
+
+const StatusBadge = styled.div`
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: ${props => 
+    props.status === 'watching' ? '#ffd700' :
+    props.status === 'completed' ? '#4caf50' :
+    props.status === 'planned' ? '#2196f3' : 'var(--tg-theme-button-color)'
+  };
+  color: white;
+  margin-top: auto;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  color: var(--tg-theme-hint-color);
+  padding: 30px;
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 12px;
+  margin: 10px 0;
 `;
 
 const Profile = ({ user, animeList }) => {
@@ -144,17 +192,10 @@ const Profile = ({ user, animeList }) => {
     }
   };
 
-  const handleCopyProfileId = () => {
-    if (currentUser?.profileId) {
-      navigator.clipboard.writeText(currentUser.profileId);
-      // You could add a toast notification here
-    }
-  };
-
   if (!currentUser) {
     return (
       <ProfileContainer>
-        <div style={{ textAlign: 'center' }}>User not found</div>
+        <EmptyMessage>User not found</EmptyMessage>
       </ProfileContainer>
     );
   }
@@ -165,16 +206,16 @@ const Profile = ({ user, animeList }) => {
     planned: animeList?.filter(anime => anime.status === 'planned').length || 0
   };
 
-  const watchedAnime = animeList?.filter(anime => anime.status === 'completed') || [];
-  const plannedAnime = animeList?.filter(anime => anime.status === 'planned') || [];
   const watchingAnime = animeList?.filter(anime => anime.status === 'watching') || [];
+  const completedAnime = animeList?.filter(anime => anime.status === 'completed') || [];
+  const plannedAnime = animeList?.filter(anime => anime.status === 'planned') || [];
 
   return (
     <ProfileContainer>
       <ProfileHeader>
         <AvatarContainer>
-          <label htmlFor="avatar-upload" style={{ cursor: 'pointer', display: 'block' }}>
-            <AvatarImage src={currentUser.avatarUrl} />
+          <label htmlFor="avatar-upload" style={{ cursor: 'pointer', display: 'block', height: '100%' }}>
+            <AvatarImage src={currentUser.avatar} />
             <AvatarOverlay className="avatar-overlay">
               {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
             </AvatarOverlay>
@@ -190,12 +231,12 @@ const Profile = ({ user, animeList }) => {
         <UserInfo>
           <Username>{currentUser.username || 'Anonymous'}</Username>
           <div style={{ color: 'var(--tg-theme-hint-color)' }}>
-            ID: {currentUser.telegramId}
+            Profile ID: {currentUser.profileId}
           </div>
         </UserInfo>
       </ProfileHeader>
 
-      <Stats>
+      <UserStats>
         <StatCard>
           <StatNumber>{stats.watching}</StatNumber>
           <StatLabel>Watching</StatLabel>
@@ -208,71 +249,70 @@ const Profile = ({ user, animeList }) => {
           <StatNumber>{stats.planned}</StatNumber>
           <StatLabel>Plan to Watch</StatLabel>
         </StatCard>
-      </Stats>
+      </UserStats>
 
-      <ProfileId onClick={handleCopyProfileId}>
-        Profile ID: {currentUser.profileId}
-      </ProfileId>
-
-      <Section>
-        <h3>Currently Watching</h3>
+      <AnimeListSection>
+        <SectionTitle>Currently Watching</SectionTitle>
         {watchingAnime.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--tg-theme-hint-color)' }}>
-            Not watching anything right now
-          </div>
+          <EmptyMessage>Not watching anything right now</EmptyMessage>
         ) : (
           watchingAnime.map((anime, index) => (
-            <AnimeItem key={index}>
-              <div className="title">{anime.title}</div>
-              <div className="date">Started: {new Date(anime.addedAt).toLocaleDateString()}</div>
-            </AnimeItem>
+            <AnimeCard key={index}>
+              <AnimeImage src={anime.image || 'https://via.placeholder.com/100x140'} alt={anime.title} />
+              <AnimeInfo>
+                <AnimeTitle>{anime.title}</AnimeTitle>
+                <AnimeDetails>
+                  {anime.episodes && `Episodes: ${anime.episodes}`}
+                  {anime.score && ` • Score: ${anime.score}`}
+                </AnimeDetails>
+                <StatusBadge status="watching">Watching</StatusBadge>
+              </AnimeInfo>
+            </AnimeCard>
           ))
         )}
-      </Section>
+      </AnimeListSection>
 
-      <Section>
-        <h3>Completed</h3>
-        {watchedAnime.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--tg-theme-hint-color)' }}>
-            Haven't completed any anime yet
-          </div>
+      <AnimeListSection>
+        <SectionTitle>Completed</SectionTitle>
+        {completedAnime.length === 0 ? (
+          <EmptyMessage>Haven't completed any anime yet</EmptyMessage>
         ) : (
-          watchedAnime.map((anime, index) => (
-            <AnimeItem key={index}>
-              <div className="title">{anime.title}</div>
-              <div className="date">Completed: {new Date(anime.addedAt).toLocaleDateString()}</div>
-            </AnimeItem>
+          completedAnime.map((anime, index) => (
+            <AnimeCard key={index}>
+              <AnimeImage src={anime.image || 'https://via.placeholder.com/100x140'} alt={anime.title} />
+              <AnimeInfo>
+                <AnimeTitle>{anime.title}</AnimeTitle>
+                <AnimeDetails>
+                  {anime.episodes && `Episodes: ${anime.episodes}`}
+                  {anime.score && ` • Score: ${anime.score}`}
+                </AnimeDetails>
+                <StatusBadge status="completed">Completed</StatusBadge>
+              </AnimeInfo>
+            </AnimeCard>
           ))
         )}
-      </Section>
+      </AnimeListSection>
 
-      <Section>
-        <h3>Plan to Watch</h3>
+      <AnimeListSection>
+        <SectionTitle>Plan to Watch</SectionTitle>
         {plannedAnime.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--tg-theme-hint-color)' }}>
-            No planned anime yet
-          </div>
+          <EmptyMessage>No planned anime yet</EmptyMessage>
         ) : (
           plannedAnime.map((anime, index) => (
-            <AnimeItem key={index}>
-              <div className="title">{anime.title}</div>
-              <div className="date">Added: {new Date(anime.addedAt).toLocaleDateString()}</div>
-            </AnimeItem>
+            <AnimeCard key={index}>
+              <AnimeImage src={anime.image || 'https://via.placeholder.com/100x140'} alt={anime.title} />
+              <AnimeInfo>
+                <AnimeTitle>{anime.title}</AnimeTitle>
+                <AnimeDetails>
+                  {anime.episodes && `Episodes: ${anime.episodes}`}
+                  {anime.score && ` • Score: ${anime.score}`}
+                </AnimeDetails>
+                <StatusBadge status="planned">Plan to Watch</StatusBadge>
+              </AnimeInfo>
+            </AnimeCard>
           ))
         )}
-      </Section>
-
-      {currentUser.recommendations?.length > 0 && (
-        <Section>
-          <h3>Shared Recommendations</h3>
-          {currentUser.recommendations.map((rec, index) => (
-            <AnimeItem key={index}>
-              <div className="title">{rec.title}</div>
-              <div className="date">Shared: {new Date(rec.sharedAt).toLocaleDateString()}</div>
-            </AnimeItem>
-          ))}
-        </Section>
-      )}
+      </AnimeListSection>
     </ProfileContainer>
   );
 };

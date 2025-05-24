@@ -149,7 +149,15 @@ function AppContent() {
       const result = await updateAnimeList(user.telegramId, anime.title, status);
       
       if (result.success) {
-        const updatedList = [...animeList, { title: anime.title, status, addedAt: new Date() }];
+        const updatedList = [...animeList, {
+          title: anime.title,
+          status,
+          addedAt: new Date(),
+          image: anime.image,
+          episodes: anime.episodes,
+          score: anime.score,
+          synopsis: anime.synopsis
+        }];
         setAnimeList(updatedList);
       }
     } catch (error) {

@@ -147,7 +147,7 @@ app.post('/api/user/avatar/:telegramId', upload.single('avatar'), async (req, re
 app.post('/api/user/anime/:telegramId', async (req, res) => {
   try {
     console.log('Received anime update:', req.body);
-    const { title, status } = req.body;
+    const { title, status, image, episodes, score, synopsis } = req.body;
     const user = await User.findOne({ telegramId: req.params.telegramId });
     
     if (!user) {
@@ -158,10 +158,25 @@ app.post('/api/user/anime/:telegramId', async (req, res) => {
     const existingAnimeIndex = user.animeList.findIndex(a => a.title === title);
     if (existingAnimeIndex !== -1) {
       // Update existing anime
-      user.animeList[existingAnimeIndex].status = status;
+      user.animeList[existingAnimeIndex] = {
+        ...user.animeList[existingAnimeIndex],
+        status,
+        image,
+        episodes,
+        score,
+        synopsis
+      };
     } else {
       // Add new anime
-      user.animeList.push({ title, status });
+      user.animeList.push({
+        title,
+        status,
+        image,
+        episodes,
+        score,
+        synopsis,
+        addedAt: new Date()
+      });
     }
 
     // Update counts
@@ -170,7 +185,7 @@ app.post('/api/user/anime/:telegramId', async (req, res) => {
     
     await user.save();
     console.log('Updated user anime list:', user.animeList);
-    res.json(user);
+    res.json({ success: true, user });
   } catch (error) {
     console.error('Error in anime update:', error);
     res.status(500).json({ message: error.message });
