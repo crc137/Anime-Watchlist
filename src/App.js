@@ -70,56 +70,68 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Получаем Telegram WebApp из глобального объекта
   const webApp = window.Telegram?.WebApp;
 
-  const initUser = useCallback(async () => {
-    if (!webApp?.initDataUnsafe?.user) {
-      setError('No user data available. Please open this app through Telegram.');
+  useEffect(() => {
+    // Проверяем доступность Telegram WebApp
+    if (!webApp) {
+      console.error('Telegram WebApp is not available');
+      setError('Please open this app through Telegram.');
       setIsLoading(false);
       return;
     }
 
-    try {
-      const telegramId = webApp.initDataUnsafe.user.id.toString();
-      const username = webApp.initDataUnsafe.user.username || 'Anonymous';
+    // Активируем WebApp
+    webApp.ready();
 
-      // First try to get existing user
-      let userData;
+    // Получаем данные пользователя
+    const initData = webApp.initDataUnsafe;
+    if (!initData || !initData.user) {
+      console.error('No user data in WebApp init data:', initData);
+      setError('Could not get user data. Please try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Инициализируем пользователя
+    const initUser = async () => {
       try {
-        userData = await getUser(telegramId);
-        console.log('Found existing user:', userData);
-      } catch (error) {
-        if (error.message.includes('404')) {
-          // User doesn't exist, create new one
-          console.log('Creating new user...');
-          userData = await createUser(telegramId, username);
-          console.log('Created new user:', userData);
-        } else {
-          throw error;
+        const telegramId = initData.user.id.toString();
+        console.log('Telegram user ID:', telegramId);
+        
+        // Пробуем получить существующего пользователя
+        let userData;
+        try {
+          userData = await getUser(telegramId);
+          console.log('Found existing user:', userData);
+        } catch (error) {
+          // Если пользователь не найден, создаем нового
+          if (error.message.includes('404')) {
+            console.log('Creating new user...');
+            userData = await createUser(
+              telegramId,
+              initData.user.username || 'Anonymous'
+            );
+            console.log('Created new user:', userData);
+          } else {
+            throw error;
+          }
         }
+
+        setUser(userData);
+        setAnimeList(userData.animeList || []);
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        setError('Failed to initialize user. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setUser(userData);
-      setAnimeList(userData.animeList || []);
-    } catch (error) {
-      console.error('Error initializing user:', error);
-      setError('Failed to initialize user. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    initUser();
   }, [webApp]);
-
-  useEffect(() => {
-    if (webApp) {
-      console.log('WebApp is available, initializing...');
-      webApp.ready();
-      initUser();
-    } else {
-      console.error('Telegram WebApp is not available');
-      setError('Please open this app through Telegram.');
-      setIsLoading(false);
-    }
-  }, [webApp, initUser]);
 
   const handleAddToList = async (anime, status) => {
     try {
@@ -164,7 +176,7 @@ function AppContent() {
   if (isLoading) {
     return (
       <Container>
-        <div>Loading...</div>
+        <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>
       </Container>
     );
   }
@@ -174,6 +186,10 @@ function AppContent() {
       <Container>
         <div style={{ color: 'red', textAlign: 'center', padding: '20px' }}>
           {error}
+          <br />
+          <small style={{ color: 'var(--tg-theme-hint-color)' }}>
+            {webApp ? 'WebApp is available' : 'WebApp is not available'}
+          </small>
         </div>
       </Container>
     );
