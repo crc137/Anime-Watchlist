@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import debounce from 'lodash/debounce';
 import { searchAnime, getAnimeDetails } from '../utils/animeApi';
@@ -135,30 +135,40 @@ const AnimeSearch = ({ onAddToList }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const debouncedSearch = useCallback(
-    debounce(async (term) => {
-      if (term.length >= 2) {
-        setIsLoading(true);
-        setError(null);
-        try {
-          console.log('Searching for:', term);
-          const results = await searchAnime(term);
-          console.log('Search results:', results);
-          setSuggestions(results);
-          setShowSuggestions(true);
-        } catch (err) {
-          console.error('Search error:', err);
-          setError('Failed to search anime');
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
+  const searchAnimeRef = useCallback(async (term) => {
+    if (term.length >= 2) {
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log('Searching for:', term);
+        const results = await searchAnime(term);
+        console.log('Search results:', results);
+        setSuggestions(results);
+        setShowSuggestions(true);
+      } catch (err) {
+        console.error('Search error:', err);
+        setError('Failed to search anime');
+      } finally {
+        setIsLoading(false);
       }
-    }, 500),
-    []
-  );
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, []);
+
+  const debouncedSearch = useRef(
+    debounce((term) => {
+      searchAnimeRef(term);
+    }, 500)
+  ).current;
+
+  useEffect(() => {
+    // Cleanup function to cancel any pending debounced searches
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -166,6 +176,9 @@ const AnimeSearch = ({ onAddToList }) => {
     if (value.length >= 2) {
       console.log('Triggering search for:', value);
       debouncedSearch(value);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
