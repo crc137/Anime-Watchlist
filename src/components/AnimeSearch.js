@@ -241,10 +241,10 @@ const AnimeSearch = ({ onAddToList }) => {
           <Score>Score: {selectedAnime.score || 'N/A'}</Score>
           <div>{selectedAnime.synopsis}</div>
           <ButtonGroup>
-            <ActionButton onClick={() => onAddToList(selectedAnime, 'watching')}>
+            <ActionButton onClick={() => onAddToList({ title: selectedAnime.title }, 'watching')}>
               Add to Watching
             </ActionButton>
-            <ActionButton onClick={() => onAddToList(selectedAnime, 'planned')}>
+            <ActionButton onClick={() => onAddToList({ title: selectedAnime.title }, 'planned')}>
               Plan to Watch
             </ActionButton>
             <ActionButton onClick={handleShare}>

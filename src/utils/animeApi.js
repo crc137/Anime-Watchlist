@@ -68,9 +68,12 @@ export const getAnimeDetails = async (id) => {
       return null;
     }
     
+    // Используем оригинальное название аниме
+    const title = data.data.title_english || data.data.title;
+    
     return {
       id: data.data.mal_id,
-      title: data.data.title,
+      title: title,
       image: data.data.images?.jpg?.image_url || '',
       synopsis: data.data.synopsis || 'No description available',
       score: data.data.score || 'N/A',
