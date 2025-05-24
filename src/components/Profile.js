@@ -8,36 +8,56 @@ const ProfileContainer = styled.div`
   color: var(--tg-theme-text-color);
 `;
 
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+`;
+
 const Avatar = styled.div`
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  overflow: hidden;
-  margin: 0 auto 20px;
-  background: var(--tg-theme-secondary-bg-color);
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  background: ${props => props.src ? `url(${props.src})` : 'var(--tg-theme-secondary-bg-color)'};
+  background-size: cover;
+  background-position: center;
+  margin-right: 20px;
+`;
+
+const UserInfo = styled.div`
+  flex: 1;
+`;
+
+const Username = styled.h2`
+  margin: 0;
+  color: var(--tg-theme-text-color);
+  font-size: 24px;
 `;
 
 const Stats = styled.div`
-  display: flex;
-  justify-content: space-around;
-  margin: 20px 0;
-  
-  div {
-    text-align: center;
-    
-    span {
-      display: block;
-      font-size: 24px;
-      font-weight: bold;
-      color: var(--tg-theme-button-color);
-    }
-  }
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+`;
+
+const StatCard = styled.div`
+  background: var(--tg-theme-secondary-bg-color);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+`;
+
+const StatNumber = styled.div`
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--tg-theme-text-color);
+`;
+
+const StatLabel = styled.div`
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
+  margin-top: 5px;
 `;
 
 const ProfileId = styled.div`
@@ -122,51 +142,46 @@ const Profile = ({ telegramId }) => {
     return <div>User not found</div>;
   }
 
+  const stats = {
+    watching: user.animeList.filter(anime => anime.status === 'watching').length,
+    completed: user.animeList.filter(anime => anime.status === 'completed').length,
+    planned: user.animeList.filter(anime => anime.status === 'planned').length
+  };
+
   const watchedAnime = user.animeList.filter(anime => anime.status === 'completed');
   const plannedAnime = user.animeList.filter(anime => anime.status === 'planned');
   const watchingAnime = user.animeList.filter(anime => anime.status === 'watching');
 
   return (
     <ProfileContainer>
-      <Avatar>
-        {user?.avatar ? (
-          <img src={user.avatar} alt="Profile" />
-        ) : (
-          <label htmlFor="avatar-upload" style={{ cursor: 'pointer', display: 'block', height: '100%' }}>
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Upload
-            </div>
-          </label>
-        )}
-        <input
-          id="avatar-upload"
-          type="file"
-          accept="image/*"
-          onChange={handleAvatarUpload}
-          style={{ display: 'none' }}
-        />
-      </Avatar>
+      <ProfileHeader>
+        <Avatar src={user.avatar} />
+        <UserInfo>
+          <Username>{user?.username || 'Anonymous'}</Username>
+          <div style={{ color: 'var(--tg-theme-hint-color)' }}>
+            ID: {user?.telegramId}
+          </div>
+        </UserInfo>
+      </ProfileHeader>
 
-      <h2 style={{ textAlign: 'center' }}>{user?.username}</h2>
-      
+      <Stats>
+        <StatCard>
+          <StatNumber>{stats.watching}</StatNumber>
+          <StatLabel>Watching</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatNumber>{stats.completed}</StatNumber>
+          <StatLabel>Completed</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatNumber>{stats.planned}</StatNumber>
+          <StatLabel>Plan to Watch</StatLabel>
+        </StatCard>
+      </Stats>
+
       <ProfileId onClick={handleCopyProfileId}>
         Profile ID: {user?.profileId}
       </ProfileId>
-
-      <Stats>
-        <div>
-          <span>{watchedAnime.length}</span>
-          Watched
-        </div>
-        <div>
-          <span>{watchingAnime.length}</span>
-          Watching
-        </div>
-        <div>
-          <span>{plannedAnime.length}</span>
-          Plan to Watch
-        </div>
-      </Stats>
 
       <Section>
         <h3>Currently Watching</h3>

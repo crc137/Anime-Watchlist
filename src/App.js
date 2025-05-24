@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { createUser, updateAnimeList } from './utils/api';
+import { createUser, updateAnimeList, getUser } from './utils/api';
 import Profile from './components/Profile';
 import AnimeSearch from './components/AnimeSearch';
 
@@ -68,74 +68,116 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('main');
   const [animeList, setAnimeList] = useState([]);
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const webApp = window.Telegram?.WebApp;
 
   const initUser = useCallback(async () => {
     if (!webApp?.initDataUnsafe?.user) {
-      console.warn('No user data in WebApp init data');
+      setError('No user data available. Please open this app through Telegram.');
+      setIsLoading(false);
       return;
     }
 
     try {
-      console.log('Initializing user with data:', webApp.initDataUnsafe.user);
-      const userData = await createUser(
-        webApp.initDataUnsafe.user.id.toString(),
-        webApp.initDataUnsafe.user.username || 'Anonymous'
-      );
-      console.log('User data received:', userData);
+      const telegramId = webApp.initDataUnsafe.user.id.toString();
+      const username = webApp.initDataUnsafe.user.username || 'Anonymous';
+
+      // First try to get existing user
+      let userData;
+      try {
+        userData = await getUser(telegramId);
+        console.log('Found existing user:', userData);
+      } catch (error) {
+        if (error.message.includes('404')) {
+          // User doesn't exist, create new one
+          console.log('Creating new user...');
+          userData = await createUser(telegramId, username);
+          console.log('Created new user:', userData);
+        } else {
+          throw error;
+        }
+      }
+
       setUser(userData);
       setAnimeList(userData.animeList || []);
     } catch (error) {
       console.error('Error initializing user:', error);
+      setError('Failed to initialize user. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   }, [webApp]);
 
   useEffect(() => {
     if (webApp) {
-      console.log('WebApp is available, calling ready()');
+      console.log('WebApp is available, initializing...');
       webApp.ready();
       initUser();
+    } else {
+      console.error('Telegram WebApp is not available');
+      setError('Please open this app through Telegram.');
+      setIsLoading(false);
     }
   }, [webApp, initUser]);
 
   const handleAddToList = async (anime, status) => {
     try {
       if (!user) {
-        console.error('No user data available');
+        setError('Please log in to add anime to your list');
         return;
       }
 
       const updatedList = [...animeList, { title: anime.title, status }];
-      const result = await updateAnimeList(user.id, updatedList);
+      const result = await updateAnimeList(user.telegramId, anime.title, status);
       
       if (result.success) {
         setAnimeList(updatedList);
       }
     } catch (error) {
       console.error('Error adding anime to list:', error);
+      setError('Failed to add anime to list. Please try again.');
     }
   };
 
   const handleStatusChange = async (title, newStatus) => {
     try {
       if (!user) {
-        console.error('No user data available');
+        setError('Please log in to update anime status');
         return;
       }
 
-      const updatedList = animeList.map(item =>
-        item.title === title ? { ...item, status: newStatus } : item
-      );
-
-      const result = await updateAnimeList(user.id, updatedList);
+      const result = await updateAnimeList(user.telegramId, title, newStatus);
       
       if (result.success) {
+        const updatedList = animeList.map(item =>
+          item.title === title ? { ...item, status: newStatus } : item
+        );
         setAnimeList(updatedList);
       }
     } catch (error) {
       console.error('Error updating anime status:', error);
+      setError('Failed to update anime status. Please try again.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <Container>
+        <div>Loading...</div>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <div style={{ color: 'red', textAlign: 'center', padding: '20px' }}>
+          {error}
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container>
