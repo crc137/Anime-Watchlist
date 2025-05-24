@@ -2,25 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { createUser, updateAnimeList } from './utils/api';
 import Profile from './components/Profile';
-import debounce from 'lodash/debounce';
-
-// Move mock database outside component
-const MOCK_ANIME_DATABASE = [
-  "Naruto",
-  "One Piece",
-  "Attack on Titan",
-  "Death Note",
-  "My Hero Academia",
-  "Demon Slayer",
-  "Dragon Ball",
-  "Fullmetal Alchemist",
-  "Tokyo Ghoul",
-  "Sword Art Online"
-];
-
-// Create debounced search function outside component
-const createDebouncedSearch = (callback) => 
-  debounce((searchTerm) => callback(searchTerm), 300);
+import AnimeSearch from './components/AnimeSearch';
 
 const Container = styled.div`
   max-width: 600px;
@@ -29,34 +11,7 @@ const Container = styled.div`
   background: var(--tg-theme-bg-color);
   color: var(--tg-theme-text-color);
   min-height: 100vh;
-  padding-bottom: 60px; /* Space for bottom navigation */
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: none;
-  border-radius: 8px;
-  background: var(--tg-theme-secondary-bg-color);
-  color: var(--tg-theme-text-color);
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  background: var(--tg-theme-button-color);
-  color: var(--tg-theme-button-text-color);
-  margin-bottom: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
+  padding-bottom: 60px;
 `;
 
 const AnimeList = styled.div`
@@ -109,70 +64,11 @@ const NavButton = styled.button`
   transition: all 0.3s ease;
 `;
 
-const SearchContainer = styled.div`
-  position: relative;
-  width: 100%;
-  margin-bottom: 20px;
-`;
-
-const SuggestionsContainer = styled.div`
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--tg-theme-secondary-bg-color);
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 1000;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const SuggestionItem = styled.div`
-  padding: 10px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: var(--tg-theme-bg-color);
-  }
-`;
-
 function AppContent() {
   const [activeTab, setActiveTab] = useState('main');
-  const [animeTitle, setAnimeTitle] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
   const [animeList, setAnimeList] = useState([]);
   const [user, setUser] = useState(null);
   const webApp = window.Telegram?.WebApp;
-
-  const getFilteredSuggestions = useCallback((searchTerm) => {
-    if (searchTerm.length >= 2) {
-      return MOCK_ANIME_DATABASE.filter(anime =>
-        anime.toLowerCase().includes(searchTerm.toLowerCase())
-      ).slice(0, 5);
-    }
-    return [];
-  }, []);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(
-    createDebouncedSearch((searchTerm) => {
-      setSuggestions(getFilteredSuggestions(searchTerm));
-    }),
-    [getFilteredSuggestions]
-  );
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setAnimeTitle(value);
-    debouncedSearch(value);
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setAnimeTitle(suggestion);
-    setSuggestions([]);
-  };
 
   const initUser = useCallback(async () => {
     if (!webApp?.initDataUnsafe?.user) {
@@ -180,18 +76,18 @@ function AppContent() {
       return;
     }
 
-        try {
-          console.log('Initializing user with data:', webApp.initDataUnsafe.user);
-          const userData = await createUser(
-            webApp.initDataUnsafe.user.id.toString(),
-            webApp.initDataUnsafe.user.username || 'Anonymous'
-          );
-          console.log('User data received:', userData);
-          setUser(userData);
-          setAnimeList(userData.animeList || []);
-        } catch (error) {
-          console.error('Error initializing user:', error);
-        }
+    try {
+      console.log('Initializing user with data:', webApp.initDataUnsafe.user);
+      const userData = await createUser(
+        webApp.initDataUnsafe.user.id.toString(),
+        webApp.initDataUnsafe.user.username || 'Anonymous'
+      );
+      console.log('User data received:', userData);
+      setUser(userData);
+      setAnimeList(userData.animeList || []);
+    } catch (error) {
+      console.error('Error initializing user:', error);
+    }
   }, [webApp]);
 
   useEffect(() => {
@@ -199,112 +95,84 @@ function AppContent() {
       console.log('WebApp is available, calling ready()');
       webApp.ready();
       initUser();
-    } else {
-      console.warn('WebApp is not available');
     }
   }, [webApp, initUser]);
 
-  const handleAddAnime = async () => {
-    if (!animeTitle.trim() || !user) return;
-
+  const handleAddToList = async (anime, status) => {
     try {
-      const updatedUser = await updateAnimeList(user.telegramId, animeTitle, 'planned');
-      setAnimeList(updatedUser.animeList);
-      setAnimeTitle('');
+      if (!user) {
+        console.error('No user data available');
+        return;
+      }
+
+      const updatedList = [...animeList, { title: anime.title, status }];
+      const result = await updateAnimeList(user.id, updatedList);
+      
+      if (result.success) {
+        setAnimeList(updatedList);
+      }
     } catch (error) {
-      console.error('Error adding anime:', error);
+      console.error('Error adding anime to list:', error);
     }
   };
 
   const handleStatusChange = async (title, newStatus) => {
-    if (!user) return;
-
     try {
-      const updatedUser = await updateAnimeList(user.telegramId, title, newStatus);
-      setAnimeList(updatedUser.animeList);
+      if (!user) {
+        console.error('No user data available');
+        return;
+      }
+
+      const updatedList = animeList.map(item =>
+        item.title === title ? { ...item, status: newStatus } : item
+      );
+
+      const result = await updateAnimeList(user.id, updatedList);
+      
+      if (result.success) {
+        setAnimeList(updatedList);
+      }
     } catch (error) {
       console.error('Error updating anime status:', error);
     }
   };
 
-  console.log('Current state:', { activeTab, user, animeList });
-
   return (
     <Container>
-      {activeTab === 'main' && (
+      {activeTab === 'main' ? (
         <>
-          <SearchContainer>
-            <Input
-              type="text"
-              placeholder="Enter anime title"
-              value={animeTitle}
-              onChange={handleInputChange}
-              onBlur={() => {
-                // Delay hiding suggestions to allow click events
-                setTimeout(() => setSuggestions([]), 200);
-              }}
-            />
-            {suggestions.length > 0 && (
-              <SuggestionsContainer>
-                {suggestions.map((suggestion, index) => (
-                  <SuggestionItem
-                    key={index}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                  >
-                    {suggestion}
-                  </SuggestionItem>
-                ))}
-              </SuggestionsContainer>
-            )}
-          </SearchContainer>
-          <Button onClick={handleAddAnime} disabled={!animeTitle.trim()}>
-            Add to List
-          </Button>
-
+          <AnimeSearch onAddToList={handleAddToList} />
           <AnimeList>
-            {animeList.length === 0 ? (
-              <div style={{ textAlign: 'center', marginTop: '20px', color: 'var(--tg-theme-hint-color)' }}>
-                Your watchlist is empty. Add some anime to watch!
-              </div>
-            ) : (
-              animeList.map((anime, index) => (
-                <AnimeItem key={index}>
-                  <div>{anime.title}</div>
-                  <div>
-                    <StatusButton
-                      status={anime.status}
-                      onClick={() => {
-                        const nextStatus = {
-                          planned: 'watching',
-                          watching: 'completed',
-                          completed: 'planned'
-                        }[anime.status];
-                        handleStatusChange(anime.title, nextStatus);
-                      }}
-                    >
-                      {anime.status}
-                    </StatusButton>
-                  </div>
-                </AnimeItem>
-              ))
-            )}
+            {animeList.map((anime, index) => (
+              <AnimeItem key={index}>
+                <span>{anime.title}</span>
+                <StatusButton
+                  status={anime.status}
+                  onClick={() => handleStatusChange(
+                    anime.title,
+                    anime.status === 'planned' ? 'watching' :
+                    anime.status === 'watching' ? 'completed' : 'planned'
+                  )}
+                >
+                  {anime.status}
+                </StatusButton>
+              </AnimeItem>
+            ))}
           </AnimeList>
         </>
+      ) : (
+        <Profile user={user} animeList={animeList} />
       )}
-
-      {activeTab === 'profile' && user && (
-        <Profile telegramId={user.telegramId} />
-      )}
-
+      
       <BottomNavigation>
-        <NavButton 
-          active={activeTab === 'main'} 
+        <NavButton
+          active={activeTab === 'main'}
           onClick={() => setActiveTab('main')}
         >
           Main
         </NavButton>
-        <NavButton 
-          active={activeTab === 'profile'} 
+        <NavButton
+          active={activeTab === 'profile'}
           onClick={() => setActiveTab('profile')}
         >
           Profile
@@ -315,11 +183,7 @@ function AppContent() {
 }
 
 function App() {
-  return (
-    <Container>
-      <AppContent />
-    </Container>
-  );
+  return <AppContent />;
 }
 
 export default App;
