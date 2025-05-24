@@ -16,9 +16,9 @@ const Container = styled.div`
 
 const AnimeList = styled.div`
   margin-top: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 `;
 
 const AnimeCard = styled.div`
@@ -27,6 +27,9 @@ const AnimeCard = styled.div`
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
+  display: flex;
+  margin-bottom: 15px;
+  width: 100%;
 
   &:hover {
     transform: translateY(-2px);
@@ -34,15 +37,29 @@ const AnimeCard = styled.div`
 `;
 
 const AnimeImage = styled.div`
-  width: 100%;
-  height: 150px;
-  background: ${props => props.image ? `url(${props.image})` : 'var(--tg-theme-secondary-bg-color)'};
+  width: 100px;
+  min-width: 100px;
+  height: 140px;
+  background: ${props => props.image ? `url(${props.image})` : 'var(--tg-theme-hint-color)'};
   background-size: cover;
   background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tg-theme-text-color);
+  font-size: 16px;
+
+  &::after {
+    content: '${props => !props.image ? "No Image" : ""}';
+  }
 `;
 
 const AnimeInfo = styled.div`
   padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;
 
 const AnimeTitle = styled.h3`
@@ -50,9 +67,13 @@ const AnimeTitle = styled.h3`
   font-size: 16px;
   color: var(--tg-theme-text-color);
   margin-bottom: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+`;
+
+const AnimeDetails = styled.div`
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
+  margin-bottom: 10px;
+  line-height: 1.4;
 `;
 
 const StatusBadge = styled.div`
@@ -68,17 +89,33 @@ const StatusBadge = styled.div`
   };
   color: ${props => props.status === 'watching' ? '#000' : '#fff'};
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  align-self: flex-end;
+  margin-top: auto;
 
   &:hover {
-    filter: brightness(1.1);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 `;
 
-const AnimeDetails = styled.div`
+const ActionFeedback = styled.div`
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--tg-theme-button-color);
+  color: var(--tg-theme-button-text-color);
+  padding: 12px 24px;
+  border-radius: 20px;
   font-size: 14px;
-  color: var(--tg-theme-hint-color);
-  margin-bottom: 10px;
+  opacity: ${props => props.show ? '1' : '0'};
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
 `;
 
 const BottomNavigation = styled.div`
@@ -118,6 +155,8 @@ function AppContent() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [feedback, setFeedback] = useState('');
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // Получаем Telegram WebApp из глобального объекта
   const webApp = window.Telegram?.WebApp;
@@ -228,6 +267,11 @@ function AppContent() {
           item.title === title ? { ...item, status: newStatus } : item
         );
         setAnimeList(updatedList);
+        
+        // Show feedback
+        setFeedback(`Updated "${title}" to ${newStatus}`);
+        setShowFeedback(true);
+        setTimeout(() => setShowFeedback(false), 2000);
       }
     } catch (error) {
       console.error('Error updating anime status:', error);
@@ -267,11 +311,13 @@ function AppContent() {
               <AnimeCard key={index}>
                 <AnimeImage image={anime.image} />
                 <AnimeInfo>
-                  <AnimeTitle>{anime.title}</AnimeTitle>
-                  <AnimeDetails>
-                    {anime.episodes && `Episodes: ${anime.episodes}`}
-                    {anime.score && ` • Score: ${anime.score}`}
-                  </AnimeDetails>
+                  <div>
+                    <AnimeTitle>{anime.title}</AnimeTitle>
+                    <AnimeDetails>
+                      {anime.episodes && `Episodes: ${anime.episodes}`}
+                      {anime.score && ` • Score: ${anime.score}`}
+                    </AnimeDetails>
+                  </div>
                   <StatusBadge
                     status={anime.status}
                     onClick={() => handleStatusChange(
@@ -290,6 +336,10 @@ function AppContent() {
       ) : (
         <Profile user={user} animeList={animeList} />
       )}
+      
+      <ActionFeedback show={showFeedback}>
+        {feedback}
+      </ActionFeedback>
       
       <BottomNavigation>
         <NavButton
