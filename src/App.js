@@ -140,10 +140,16 @@ function AppContent() {
         return;
       }
 
-      const updatedList = [...animeList, { title: anime.title, status }];
+      if (!anime || !anime.title || !status) {
+        console.error('Missing required parameters:', { anime, status });
+        return;
+      }
+
+      console.log('Adding anime to list:', { anime, status, telegramId: user.telegramId });
       const result = await updateAnimeList(user.telegramId, anime.title, status);
       
       if (result.success) {
+        const updatedList = [...animeList, { title: anime.title, status, addedAt: new Date() }];
         setAnimeList(updatedList);
       }
     } catch (error) {
