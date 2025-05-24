@@ -14,14 +14,43 @@ const ProfileHeader = styled.div`
   margin-bottom: 30px;
 `;
 
-const Avatar = styled.div`
+const AvatarContainer = styled.div`
+  position: relative;
   width: 80px;
   height: 80px;
+  margin-right: 20px;
+  cursor: pointer;
+
+  &:hover .avatar-overlay {
+    opacity: 1;
+  }
+`;
+
+const AvatarImage = styled.div`
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background: ${props => props.src ? `url(${props.src})` : 'var(--tg-theme-secondary-bg-color)'};
   background-size: cover;
   background-position: center;
-  margin-right: 20px;
+`;
+
+const AvatarOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 `;
 
 const UserInfo = styled.div`
@@ -99,6 +128,7 @@ const AnimeItem = styled.div`
 const Profile = ({ telegramId }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const loadUserData = useCallback(async () => {
     try {
@@ -119,10 +149,13 @@ const Profile = ({ telegramId }) => {
     const file = event.target.files[0];
     if (file) {
       try {
+        setUploadingAvatar(true);
         const updatedUser = await uploadAvatar(telegramId, file);
         setUser(updatedUser);
       } catch (error) {
         console.error('Error uploading avatar:', error);
+      } finally {
+        setUploadingAvatar(false);
       }
     }
   };
@@ -135,31 +168,53 @@ const Profile = ({ telegramId }) => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <ProfileContainer>
+        <div style={{ textAlign: 'center' }}>Loading...</div>
+      </ProfileContainer>
+    );
   }
 
   if (!user) {
-    return <div>User not found</div>;
+    return (
+      <ProfileContainer>
+        <div style={{ textAlign: 'center' }}>User not found</div>
+      </ProfileContainer>
+    );
   }
 
   const stats = {
-    watching: user.animeList.filter(anime => anime.status === 'watching').length,
-    completed: user.animeList.filter(anime => anime.status === 'completed').length,
-    planned: user.animeList.filter(anime => anime.status === 'planned').length
+    watching: user.animeList?.filter(anime => anime.status === 'watching').length || 0,
+    completed: user.animeList?.filter(anime => anime.status === 'completed').length || 0,
+    planned: user.animeList?.filter(anime => anime.status === 'planned').length || 0
   };
 
-  const watchedAnime = user.animeList.filter(anime => anime.status === 'completed');
-  const plannedAnime = user.animeList.filter(anime => anime.status === 'planned');
-  const watchingAnime = user.animeList.filter(anime => anime.status === 'watching');
+  const watchedAnime = user.animeList?.filter(anime => anime.status === 'completed') || [];
+  const plannedAnime = user.animeList?.filter(anime => anime.status === 'planned') || [];
+  const watchingAnime = user.animeList?.filter(anime => anime.status === 'watching') || [];
 
   return (
     <ProfileContainer>
       <ProfileHeader>
-        <Avatar src={user.avatar} />
+        <AvatarContainer>
+          <label htmlFor="avatar-upload" style={{ cursor: 'pointer', display: 'block' }}>
+            <AvatarImage src={user.avatarUrl} />
+            <AvatarOverlay className="avatar-overlay">
+              {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+            </AvatarOverlay>
+          </label>
+          <input
+            id="avatar-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarUpload}
+            style={{ display: 'none' }}
+          />
+        </AvatarContainer>
         <UserInfo>
-          <Username>{user?.username || 'Anonymous'}</Username>
+          <Username>{user.username || 'Anonymous'}</Username>
           <div style={{ color: 'var(--tg-theme-hint-color)' }}>
-            ID: {user?.telegramId}
+            ID: {user.telegramId}
           </div>
         </UserInfo>
       </ProfileHeader>
@@ -180,7 +235,7 @@ const Profile = ({ telegramId }) => {
       </Stats>
 
       <ProfileId onClick={handleCopyProfileId}>
-        Profile ID: {user?.profileId}
+        Profile ID: {user.profileId}
       </ProfileId>
 
       <Section>
@@ -231,7 +286,7 @@ const Profile = ({ telegramId }) => {
         )}
       </Section>
 
-      {user.recommendations && user.recommendations.length > 0 && (
+      {user.recommendations?.length > 0 && (
         <Section>
           <h3>Shared Recommendations</h3>
           {user.recommendations.map((rec, index) => (
