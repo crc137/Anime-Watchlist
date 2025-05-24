@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { createUser, updateAnimeList, getUser } from './utils/api';
 import Profile from './components/Profile';
