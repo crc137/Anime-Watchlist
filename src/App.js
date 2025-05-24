@@ -5,41 +5,80 @@ import Profile from './components/Profile';
 import AnimeSearch from './components/AnimeSearch';
 
 const Container = styled.div`
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 20px;
   background: var(--tg-theme-bg-color);
   color: var(--tg-theme-text-color);
   min-height: 100vh;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
 `;
 
 const AnimeList = styled.div`
   margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
 `;
 
-const AnimeItem = styled.div`
+const AnimeCard = styled.div`
   background: var(--tg-theme-secondary-bg-color);
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 `;
 
-const StatusButton = styled.button`
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
+const AnimeImage = styled.div`
+  width: 100%;
+  height: 150px;
+  background: ${props => props.image ? `url(${props.image})` : 'var(--tg-theme-secondary-bg-color)'};
+  background-size: cover;
+  background-position: center;
+`;
+
+const AnimeInfo = styled.div`
+  padding: 15px;
+`;
+
+const AnimeTitle = styled.h3`
+  margin: 0;
+  font-size: 16px;
+  color: var(--tg-theme-text-color);
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const StatusBadge = styled.div`
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
   background: ${props => 
     props.status === 'watching' ? '#ffd700' :
     props.status === 'completed' ? '#4caf50' :
     props.status === 'planned' ? '#2196f3' : 'var(--tg-theme-button-color)'
   };
-  color: white;
+  color: ${props => props.status === 'watching' ? '#000' : '#fff'};
   cursor: pointer;
-  font-weight: bold;
+  transition: all 0.2s;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+`;
+
+const AnimeDetails = styled.div`
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
+  margin-bottom: 10px;
 `;
 
 const BottomNavigation = styled.div`
@@ -50,6 +89,7 @@ const BottomNavigation = styled.div`
   display: flex;
   background: var(--tg-theme-bg-color);
   border-top: 1px solid var(--tg-theme-hint-color);
+  backdrop-filter: blur(10px);
   z-index: 1000;
 `;
 
@@ -62,6 +102,14 @@ const NavButton = styled.button`
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover {
+    background: ${props => props.active ? 'var(--tg-theme-button-color)' : 'rgba(255, 255, 255, 0.1)'};
+  }
 `;
 
 function AppContent() {
@@ -216,19 +264,26 @@ function AppContent() {
           <AnimeSearch onAddToList={handleAddToList} />
           <AnimeList>
             {animeList.map((anime, index) => (
-              <AnimeItem key={index}>
-                <span>{anime.title}</span>
-                <StatusButton
-                  status={anime.status}
-                  onClick={() => handleStatusChange(
-                    anime.title,
-                    anime.status === 'planned' ? 'watching' :
-                    anime.status === 'watching' ? 'completed' : 'planned'
-                  )}
-                >
-                  {anime.status}
-                </StatusButton>
-              </AnimeItem>
+              <AnimeCard key={index}>
+                <AnimeImage image={anime.image} />
+                <AnimeInfo>
+                  <AnimeTitle>{anime.title}</AnimeTitle>
+                  <AnimeDetails>
+                    {anime.episodes && `Episodes: ${anime.episodes}`}
+                    {anime.score && ` • Score: ${anime.score}`}
+                  </AnimeDetails>
+                  <StatusBadge
+                    status={anime.status}
+                    onClick={() => handleStatusChange(
+                      anime.title,
+                      anime.status === 'planned' ? 'watching' :
+                      anime.status === 'watching' ? 'completed' : 'planned'
+                    )}
+                  >
+                    {anime.status.charAt(0).toUpperCase() + anime.status.slice(1)}
+                  </StatusBadge>
+                </AnimeInfo>
+              </AnimeCard>
             ))}
           </AnimeList>
         </>
@@ -241,12 +296,14 @@ function AppContent() {
           active={activeTab === 'main'}
           onClick={() => setActiveTab('main')}
         >
+          <span role="img" aria-label="home">🏠</span>
           Main
         </NavButton>
         <NavButton
           active={activeTab === 'profile'}
           onClick={() => setActiveTab('profile')}
         >
+          <span role="img" aria-label="profile">👤</span>
           Profile
         </NavButton>
       </BottomNavigation>

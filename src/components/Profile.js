@@ -6,24 +6,33 @@ const ProfileContainer = styled.div`
   padding: 20px;
   background: var(--tg-theme-bg-color);
   color: var(--tg-theme-text-color);
+  max-width: 800px;
+  margin: 0 auto;
 `;
 
 const ProfileHeader = styled.div`
-  display: flex;
-  align-items: center;
+  position: relative;
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 20px;
+  padding: 30px;
   margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 `;
 
 const AvatarContainer = styled.div`
   position: relative;
-  width: 100px;
-  height: 100px;
-  margin-right: 20px;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 20px;
   cursor: pointer;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--tg-theme-secondary-bg-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: var(--tg-theme-bg-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 
   &:hover .avatar-overlay {
     opacity: 1;
@@ -53,25 +62,31 @@ const AvatarOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 14px;
   opacity: 0;
-  transition: opacity 0.2s;
-`;
-
-const UserInfo = styled.div`
-  flex: 1;
+  transition: opacity 0.3s;
 `;
 
 const Username = styled.h2`
   margin: 0;
   color: var(--tg-theme-text-color);
-  font-size: 24px;
-  margin-bottom: 5px;
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+`;
+
+const ProfileId = styled.div`
+  color: var(--tg-theme-hint-color);
+  font-size: 14px;
+  background: var(--tg-theme-bg-color);
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
 `;
 
 const UserStats = styled.div`
@@ -79,98 +94,112 @@ const UserStats = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 15px;
   margin-top: 20px;
-  margin-bottom: 30px;
+  width: 100%;
 `;
 
 const StatCard = styled.div`
-  background: var(--tg-theme-secondary-bg-color);
-  padding: 15px;
-  border-radius: 12px;
+  background: var(--tg-theme-bg-color);
+  padding: 20px;
+  border-radius: 16px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 `;
 
 const StatNumber = styled.div`
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
   color: var(--tg-theme-text-color);
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 `;
 
 const StatLabel = styled.div`
   font-size: 14px;
   color: var(--tg-theme-hint-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 const AnimeListSection = styled.div`
-  margin: 20px 0;
+  margin: 30px 0;
 `;
 
 const SectionTitle = styled.h3`
   color: var(--tg-theme-text-color);
-  margin-bottom: 15px;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--tg-theme-secondary-bg-color);
 `;
 
 const AnimeCard = styled.div`
   background: var(--tg-theme-secondary-bg-color);
-  border-radius: 12px;
-  margin-bottom: 15px;
+  border-radius: 16px;
+  margin-bottom: 20px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateX(4px);
+  }
 `;
 
 const AnimeImage = styled.img`
-  width: 100px;
-  height: 140px;
+  width: 120px;
+  height: 160px;
   object-fit: cover;
 `;
 
 const AnimeInfo = styled.div`
-  padding: 15px;
+  padding: 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
 `;
 
 const AnimeTitle = styled.div`
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--tg-theme-text-color);
 `;
 
 const AnimeDetails = styled.div`
   font-size: 14px;
   color: var(--tg-theme-hint-color);
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  line-height: 1.4;
 `;
 
 const StatusBadge = styled.div`
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 500;
   background: ${props => 
     props.status === 'watching' ? '#ffd700' :
     props.status === 'completed' ? '#4caf50' :
     props.status === 'planned' ? '#2196f3' : 'var(--tg-theme-button-color)'
   };
-  color: white;
-  margin-top: auto;
+  color: ${props => props.status === 'watching' ? '#000' : '#fff'};
+  align-self: flex-start;
 `;
 
 const EmptyMessage = styled.div`
   text-align: center;
   color: var(--tg-theme-hint-color);
-  padding: 30px;
+  padding: 40px;
   background: var(--tg-theme-secondary-bg-color);
-  border-radius: 12px;
-  margin: 10px 0;
+  border-radius: 16px;
+  font-size: 16px;
+  margin: 20px 0;
 `;
 
 const Profile = ({ user, animeList }) => {
@@ -228,12 +257,8 @@ const Profile = ({ user, animeList }) => {
             style={{ display: 'none' }}
           />
         </AvatarContainer>
-        <UserInfo>
-          <Username>{currentUser.username || 'Anonymous'}</Username>
-          <div style={{ color: 'var(--tg-theme-hint-color)' }}>
-            Profile ID: {currentUser.profileId}
-          </div>
-        </UserInfo>
+        <Username>{currentUser.username || 'Anonymous'}</Username>
+        <ProfileId>{currentUser.profileId}</ProfileId>
       </ProfileHeader>
 
       <UserStats>
